@@ -49,36 +49,53 @@ function displayAffirmation() {
   affirmationContent.innerHTML = `${affirmation[currentDate.getDay()]}`;
 }
 function displayForecast(response) {
-  let forecast = response.data.daily;
+  let forecastList = response.data.list;
   let forecastElement = document.querySelector("#forecast");
   let forecastHTML = `<div class="row">`;
 
-  forecast.forEach(function (forecastDay, index) {
-    if (index < 6) {
-      forecastHTML =
-        forecastHTML +
-        `<div class="col-2">
-              <div class="weather-forecast-day">${formatDay(
-                forecastDay.dt
-              )}</div>
-              <img
-                src="http://openweathermap.org/img/wn/${
-                  forecastDay.weather[0].icon
-                }@2x.png"
-                alt=""
-                width="42"
-                class="weather-forecast-icon"
-              />
-              <div class="weather-forecast-temperatures">
-                <span class="weather-foreacast-temperature-max"> ${Math.round(
-                  forecastDay.temp.max
-                )}° </span>
-                <span class="weather-foreacast-temperature-min"> ${Math.round(
-                  forecastDay.temp.min
-                )}° </span>
-              </div>
-            </div>`;
+  let dailyForecasts = {};
+
+  // api changed, updated from one daily forecast to 3-hr data for each day
+  forecastList.forEach((entry) => {
+    // Convert timestamp to date string like '2024-06-05'
+    let date = new Date(entry.dt * 1000).toISOString().split("T")[0];
+
+    // Only keep one entry per day, preferably the one closest to 12:00
+    let hour = new Date(entry.dt * 1000).getHours();
+    if (
+      !dailyForecasts[date] ||
+      Math.abs(hour - 12) <
+        Math.abs(new Date(dailyForecasts[date].dt * 1000).getHours() - 12)
+    ) {
+      dailyForecasts[date] = entry;
     }
+  });
+
+  let days = Object.keys(dailyForecasts).slice(0, 6);
+
+  days.forEach((dateStr) => {
+    let forecastDay = dailyForecasts[dateStr];
+    forecastHTML += `
+      <div class="col-2">
+        <div class="weather-forecast-day">${formatDay(forecastDay.dt)}</div>
+        <img
+          src="http://openweathermap.org/img/wn/${
+            forecastDay.weather[0].icon
+          }@2x.png"
+          alt=""
+          width="42"
+          class="weather-forecast-icon"
+        />
+        <div class="weather-forecast-temperatures">
+          <span class="weather-forecast-temperature-max">${Math.round(
+            forecastDay.main.temp_max
+          )}°</span>
+          <span class="weather-forecast-temperature-min">${Math.round(
+            forecastDay.main.temp_min
+          )}°</span>
+        </div>
+      </div>
+    `;
   });
 
   forecastHTML = forecastHTML + `</div>`;
@@ -87,9 +104,17 @@ function displayForecast(response) {
 
 function getForecast(coordinates) {
   let units = "metric";
-  let apiKey = "e4c991b27b566dc4b5b311b6f8d9ac5c";
-  let apiUrl = `https://api.openweathermap.org/data/2.5/onecall?lat=${coordinates.lat}&lon=${coordinates.lon}&appid=${apiKey}&units=${units}`;
-  axios.get(apiUrl).then(displayForecast);
+  let apiKey = "9793275d6cee106988a4eca6fafaa94b";
+  let apiUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${coordinates.lat}&lon=${coordinates.lon}&appid=${apiKey}&units=${units}`;
+  axios
+    .get(apiUrl)
+    .then((response) => {
+      console.log("Got forecast data:", response);
+      displayForecast(response);
+    })
+    .catch((error) => {
+      console.error("Error fetching forecast:", error);
+    });
 }
 function displayTemperature(response) {
   let temperatureElement = document.querySelector("#main-temp-value");
@@ -111,7 +136,7 @@ function displayTemperature(response) {
 
 function search(city) {
   let units = "metric";
-  let apiKey = "e4c991b27b566dc4b5b311b6f8d9ac5c";
+  let apiKey = "9793275d6cee106988a4eca6fafaa94b";
   let apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=${units}`;
 
   axios.get(apiUrl).then(displayTemperature);

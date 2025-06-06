@@ -12,6 +12,8 @@
 
 The Weather App is a simple yet functional application that provides real-time weather information for any location in the world. By leveraging the OpenWeather API, users can quickly check the current weather conditions, including temperature, humidity, and wind speed. This project was built focusing on a clean and intuitive user interface.
 
+(the key is public only for demo purposes and is being monitored)
+
 ### Features
 
 - **Real-Time Weather Data**: Fetches the latest weather information for any city or location worldwide.
